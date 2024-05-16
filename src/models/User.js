@@ -67,6 +67,10 @@ const User = {
         },
         ExpressionAttributeValues: marshall({ ":email": email }),
         ProjectionExpression: "id, email, username", 
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5 
+        }
       };
   
       const data = await client.send(new QueryCommand(params));
