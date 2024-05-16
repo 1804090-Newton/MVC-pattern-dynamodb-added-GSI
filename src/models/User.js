@@ -1,8 +1,9 @@
-const {  PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const {  PutItemCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, ScanCommand,QueryCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const { client } = require('../config/aws');
 
 const TABLE_NAME = 'Users';
+const GSI_NAME = 'EmailIndex';
 
 const User = {
   async getAll() {
@@ -53,6 +54,29 @@ const User = {
         throw error;
       });
   },
+
+  
+  async getByEmail(email) {
+    try {
+      const params = {
+        TableName: TABLE_NAME,
+        IndexName: GSI_NAME, 
+        KeyConditionExpression: "#email = :email",
+        ExpressionAttributeNames: {
+          "#email": "email",
+        },
+        ExpressionAttributeValues: marshall({ ":email": email }),
+        ProjectionExpression: "id, email, username", 
+      };
+  
+      const data = await client.send(new QueryCommand(params));
+      return unmarshall(data.Items[0]);
+    } catch (error) {
+      console.error("Unable to read item. Error:", error);
+      throw error; 
+    }
+  },
+  
 
   async updateUser(id, userData) {
     const updateExpression = buildUpdateExpression(userData);
